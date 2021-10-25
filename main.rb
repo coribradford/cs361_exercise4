@@ -34,26 +34,32 @@ class BedtimeMentalState < MentalState ; end
 
 class MorningMentalState < MentalState ; end
 
+class NullMentalState < MentalState ; end
+
 def audit_sanity(bedtime_mental_state)
-    return nil unless bedtime_mental_state.auditable?
-    if bedtime_mental_state.audit!.ok?
-        MorningMentalState.new(:ok)
-    else 
-        MorningMentalState.new(:not_ok)
-    end
+  raise ConnectionError if !bedtime_mental_state.auditable?
+  if bedtime_mental_state.audit!.ok?
+    MorningMentalState.new(:ok)
+  else 
+    MorningMentalState.new(:not_ok)
+  end
 end
 
-new_state = audit_sanity(bedtime_mental_state)
+begin
+  new_state = audit_sanity(bedtime_mental_state)
+rescue => ConnectionError
+  new_state = NullMentalState.new()
+end
 new_state.do_work
-
-
-
 
 # Exercise 5 Part 3 (Wrapping APIs)
 
 require 'candy_service'
 
-machine = CandyMachine.new
+def make_candy_machine()
+  machine = CandyMachine.new
+end
+machine = make_candy_machine()
 machine.prepare
 
 if machine.ready?
